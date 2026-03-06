@@ -1,9 +1,18 @@
+"use client"
+import { createUserAction } from "./user";
 
 
 export default function Home() {
+
+  async function createUser() {
+    const newUser = await createUserAction();
+
+    console.log(newUser);
+  }
+
   return (
-    <div className="bg-white">
-      heyyyyyyy
+    <div>
+      <button onClick={createUser}>Create User</button>
     </div>
-  );
+  )
 }
