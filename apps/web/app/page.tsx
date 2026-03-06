@@ -1,18 +1,14 @@
-"use client"
-import { createUserAction } from "./user";
+import { prismaClient } from "@repo/db/client";
 
 
-export default function Home() {
-
-  async function createUser() {
-    const newUser = await createUserAction();
-
-    console.log(newUser);
-  }
+export default async function Home() {
+  const user = await prismaClient.user.findFirst();
 
   return (
     <div>
-      <button onClick={createUser}>Create User</button>
+      {user?.id}
+      {user?.username}
+      {user?.password}
     </div>
   )
 }

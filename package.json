@@ -1,5 +1,5 @@
 {
-  "name": "DevOps",
+  "name": "deployment",
   "private": true,
   "scripts": {
     "build": "turbo run build",
