@@ -22,9 +22,5 @@ jobs:
             pnpm install
             pnpm run build
             pm2 restart http-backend
-            cd apps/web
-            pnpm run build
-            cd ../..
-            pm2 restart web-app
             pm2 restart web-socket
           EOF
