@@ -17,6 +17,9 @@ jobs:
           chmod 600 ssh_key
 
           ssh -o StrictHostKeyChecking=no -i ssh_key ubuntu@34.236.36.74 << 'EOF'
+            export NVM_DIR="$HOME/.nvm"
+            source "$NVM_DIR/nvm.sh"
+
             cd deployOnAws
             git pull
             pnpm install
