@@ -1,0 +1,33 @@
+name: Deploy on production
+
+on:
+  push:
+    branches:
+      - "production"
+
+jobs:
+  redeploy_frontend:
+    name: Deploying frontend to staging server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key
+          chmod 600 ssh_key
+
+          ssh -o StrictHostKeyChecking=no -i ssh_key ubuntu@98.82.137.230 << 'EOF'
+            export NVM_DIR="$HOME/.nvm"
+            source "$NVM_DIR/nvm.sh"
+
+            cd deployOnAws
+            git pull
+            pnpm install
+            pnpm run build
+            pm2 restart http-backend
+            cd apps/web
+            pnpm run build
+            cd ../..
+            pm2 restart web-app
+            pm2 restart web-socket
+          EOF
