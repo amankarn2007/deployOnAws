@@ -24,10 +24,10 @@ jobs:
             git pull
             pnpm install
             pnpm run build
-            pm2 restart http-backend
+            pm2 restart backend
             cd apps/web
             pnpm run build
             cd ../..
-            pm2 restart web-app
-            pm2 restart web-socket
+            pm2 restart web
+            pm2 restart ws
           EOF
