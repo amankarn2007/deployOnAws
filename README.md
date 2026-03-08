@@ -1,3 +1,169 @@
+1. Why Use Two Instances
+
+When deploying an application on Amazon EC2, developers usually create two servers:
+
+Instance	Purpose	Who Uses It
+Staging	Testing environment	Developers
+Production	Live environment	Real users
+Logic
+Developer writes code
+        ↓
+Deploy to STAGING server
+        ↓
+Test the application
+        ↓
+If everything works → deploy to PRODUCTION
+
+This prevents bugs from reaching real users.
+
+2. Example Scenario
+
+You add a new login feature.
+
+Without staging:
+
+Code → Deploy to production → Bug → Users cannot login
+
+With staging:
+
+Code → Deploy to staging
+     ↓
+Test login feature
+     ↓
+Fix bugs
+     ↓
+Deploy to production
+
+Users only see the stable version.
+
+3. Architecture
+Developer Laptop
+       ↓
+Git Repository
+       ↓
+STAGING SERVER
+       ↓
+PRODUCTION SERVER
+
+Both servers run the same application, but their purpose is different.
+
+4. Creating Two Instances
+
+In Amazon Web Services → Amazon EC2 create two servers.
+
+Instance 1
+Name: staging-server
+Purpose: testing
+Instance 2
+Name: production-server
+Purpose: live application
+
+Typical configuration:
+
+OS: Ubuntu 22.04
+Instance type: t2.micro / t3.micro
+Storage: 20GB
+5. Cloning the Same Repository
+
+Both servers usually run the same project.
+
+Example:
+
+git clone https://github.com/username/project.git
+
+So both servers have the same codebase.
+
+The difference is how and when they are updated.
+
+6. Deployment Workflow
+Step 1 – Deploy to Staging
+
+On staging server:
+
+git pull
+pnpm install
+pnpm run build
+pm2 restart all
+
+Test everything.
+
+Step 2 – Deploy to Production
+
+If everything works:
+
+git pull
+pnpm install
+pnpm run build
+pm2 restart all
+
+Now the update goes live.
+
+7. Security Group Port Logic
+
+Each EC2 instance has a security group (a firewall).
+
+Example ports:
+
+Port	Purpose
+22	SSH access
+80	HTTP website
+443	HTTPS website
+
+Usually you open only these ports:
+
+22
+80
+443
+8. Why Not Open Ports Like 3000 or 8080
+
+Your application might run internally on:
+
+3000 → Next.js app
+3001 → Backend API
+8080 → WebSocket
+
+But users should not access these directly.
+
+Instead, Nginx listens on port 80 and forwards traffic internally.
+
+Example:
+
+User request
+     ↓
+Port 80 (Nginx)
+     ↓
+Next.js app → port 3000
+Backend API → port 3001
+WebSocket → port 8080
+
+So ports 3000, 3001, 8080 remain private.
+
+9. Security Groups for Both Instances
+
+Usually both staging and production have similar rules:
+
+Inbound Rules
+
+SSH   → port 22
+HTTP  → port 80
+HTTPS → port 443
+
+Everything else stays closed.
+
+10. Final Concept
+STAGING SERVER
+• Used for testing
+• Developers deploy first here
+
+PRODUCTION SERVER
+• Used by real users
+• Only stable versions are deployed
+
+This is a standard deployment practice used by most companies running applications on Amazon EC2.
+
+
+# Steps
+
 # 1. Connect to the Server via SSH
 ## Connect to your EC2 instance using your SSH private key
     ssh -i ~/.ssh/id_ed25519 ubuntu@YOUR_SERVER_IP
