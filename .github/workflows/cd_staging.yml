@@ -16,7 +16,7 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key
           chmod 600 ssh_key
 
-          ssh -i ssh_key ubuntu@34.236.36.74 << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ssh_key ubuntu@34.236.36.74 << 'EOF'
             cd deployOnAws
             git pull
             pnpm install
