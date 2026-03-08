@@ -1,159 +1,213 @@
-# Turborepo starter
+# 1. Connect to the Server via SSH
+## Connect to your EC2 instance using your SSH private key
+    ssh -i ~/.ssh/id_ed25519 ubuntu@YOUR_SERVER_IP
 
-This Turborepo starter is maintained by the Turborepo core team.
+    Example: ssh -i ~/.ssh/id_ed25519 ubuntu@34.236.36.74
 
-## Using this example
+# 2. Update the Server
+## Update package list
+    sudo apt update
 
-Run the following command:
+## Upgrade installed packages
+    sudo apt upgrade -y
 
-```sh
-npx create-turbo@latest
-```
+# 3. Install Nginx
+## Install nginx web server
+sudo apt install nginx -y
 
-## What's inside?
+Check installation:
 
-This Turborepo includes the following packages/apps:
+## Check nginx version
+nginx -v
 
-### Apps and Packages
+# 4. Start and Enable Nginx
+## Start nginx service
+sudo systemctl start nginx
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+## Enable nginx to start automatically on boot
+sudo systemctl enable nginx
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+Check status:
 
-### Utilities
+## Verify nginx is running
+sudo systemctl status nginx
 
-This Turborepo has some additional tools already setup for you:
+# 5. Check Port 80
+## Check which service is using port 80
+sudo lsof -i :80
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+# 6. Test Nginx
+## Test nginx locally
+curl localhost
 
-### Build
+Expected output: Welcome to nginx!
 
-To build all apps and packages, run the following command:
+# 7. Fix Low RAM Issue (Add Swap Memory)
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+Your Next.js build was stuck because the instance had low RAM.
+So we created swap memory.
 
-```sh
-cd my-turborepo
-turbo build
-```
+## Create a 2GB swap file
+sudo fallocate -l 2G /swapfile
 
-Without global `turbo`, use your package manager:
+## Secure the swap file permissions
+sudo chmod 600 /swapfile
 
-```sh
-cd my-turborepo
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
+## Setup swap area
+sudo mkswap /swapfile
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## Enable swap
+sudo swapon /swapfile
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+Verify swap:  free -h
 
-```sh
-turbo build --filter=docs
-```
+# 8. Build the Next.js Application
 
-Without global `turbo`:
+Inside your project directory:
 
-```sh
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+## Go to web app folder
+cd ~/deployOnAws/apps/web
 
-### Develop
+## Install dependencies
+pnpm install
 
-To develop all apps and packages, run the following command:
+## Build production version
+pnpm run build
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+# 9. Run Services with PM2
 
-```sh
-cd my-turborepo
-turbo dev
-```
+You used PM2 to manage Node processes.
 
-Without global `turbo`, use your package manager:
+Check running apps:
 
-```sh
-cd my-turborepo
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+pm2 status
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+View logs:
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+pm2 logs
 
-```sh
-turbo dev --filter=web
-```
+Restart app:
 
-Without global `turbo`:
+pm2 restart "web app"
 
-```sh
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+# 10. Understand Nginx Config Structure
 
-### Remote Caching
+Main config file:
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+/etc/nginx/nginx.conf
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+Site configs:
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+/etc/nginx/sites-available/
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+Enabled sites:
 
-```sh
-cd my-turborepo
-turbo login
-```
+/etc/nginx/sites-enabled/
 
-Without global `turbo`, use your package manager:
+The main file includes site configs:
 
-```sh
-cd my-turborepo
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
+include /etc/nginx/sites-enabled/*;
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+# 11. Configure Nginx Reverse Proxy
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+Open the default site config:
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+sudo nano /etc/nginx/sites-available/default
 
-```sh
-turbo link
-```
+Replace with:
 
-Without global `turbo`:
+server {
+    listen 80;
+    server_name _;
 
-```sh
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
+    # Forward main website requests to Next.js server
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
 
-## Useful Links
+    # Backend API
+    location /backend/ {
+        proxy_pass http://localhost:3001/;
+        proxy_set_header Host $host;
+    }
 
-Learn more about the power of Turborepo:
+    # WebSocket server
+    location /ws/ {
+        proxy_pass http://localhost:8080/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
 
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+Save and exit.
+
+# 12. Ensure Site is Enabled
+ls /etc/nginx/sites-enabled
+
+If not enabled:
+
+sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
+
+# 13. Test Nginx Configuration
+sudo nginx -t
+
+Expected output:
+
+syntax is ok
+test is successful
+
+# 14. Restart Nginx
+sudo systemctl restart nginx
+
+# 15. Test Deployment
+
+Local test:
+
+curl localhost
+
+Browser test:
+
+http://YOUR_SERVER_IP
+
+Example:
+
+http://34.236.36.74
+
+# 16. Final Production Architecture
+
+Your server now works like this:
+
+Internet
+   ↓
+Nginx (Port 80)
+   ↓
+Next.js App (Port 3000)
+Backend API (Port 3001)
+WebSocket Server (Port 8080)
+
+Users only access:
+
+http://SERVER_IP
+
+Internal services stay hidden.
+
+# 17. AWS Security Group Setup
+
+Only these ports need to be open:
+
+22   SSH
+80   HTTP
+443  HTTPS (future)
+
+Ports like:
+
+3000
+3001
+8080
+
+should remain private.
